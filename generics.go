@@ -35,7 +35,7 @@ func NullEmpty[T any]() Null[T] {
 	return Null[T]{}
 }
 
-func NullValue[T any](d T) Null[T] {
+func NullNew[T any](d T) Null[T] {
 	return Null[T]{
 		Valid: true,
 		Data:  d,
@@ -51,14 +51,6 @@ func NullMap[X, Y any](a Null[X], fn func(X) Y) Null[Y] {
 		Valid: true,
 		Data:  fn(a.Data),
 	}
-}
-
-// NullAndThen ...
-func NullAndThen[X, Y any](a Null[X], fn func(X) Null[Y]) Null[Y] {
-	if !a.Valid {
-		return Null[Y]{}
-	}
-	return fn(a.Data)
 }
 
 // SliceMap ...
@@ -94,4 +86,34 @@ func (n *Null[T]) UnmarshalJSON(data []byte) error {
 	}
 	n.Valid = true
 	return json.Unmarshal(data, &n.Data)
+}
+
+// Result ...
+type Result[T any] struct {
+	Err  error
+	Data T
+}
+
+// ResultErr ...
+func ResultErr[T any](err error) Result[T] {
+	return Result[T]{
+		Err: err,
+	}
+}
+
+// ResultNew ...
+func ResultNew[T any](data T) Result[T] {
+	return Result[T]{
+		Data: data,
+	}
+}
+
+// ResultAndThen ...
+func ResultAndThen[X, Y any](r Result[X], fn func(a X) Result[Y]) Result[Y] {
+	if r.Err != nil {
+		return Result[Y]{
+			Err: r.Err,
+		}
+	}
+	return fn(r.Data)
 }

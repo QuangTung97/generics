@@ -2,6 +2,7 @@ package generics
 
 import (
 	"encoding/json"
+	"errors"
 	"fmt"
 	"github.com/stretchr/testify/assert"
 	"testing"
@@ -25,10 +26,10 @@ func TestNull(t *testing.T) {
 	})
 	assert.Equal(t, NullEmpty[string](), n)
 
-	n = NullMap(NullValue[int](20), func(x int) string {
+	n = NullMap(NullNew[int](20), func(x int) string {
 		return fmt.Sprintf("Hello: %d", x)
 	})
-	assert.Equal(t, NullValue[string]("Hello: 20"), n)
+	assert.Equal(t, NullNew[string]("Hello: 20"), n)
 }
 
 // User  ...
@@ -40,7 +41,7 @@ type User struct {
 func TestNullJSON(t *testing.T) {
 	data, err := json.Marshal(User{
 		ID:       20,
-		Username: NullValue("quang tung"),
+		Username: NullNew("quang tung"),
 	})
 	assert.Equal(t, nil, err)
 	assert.Equal(t, `{"id":20,"username":"quang tung"}`, string(data))
@@ -70,7 +71,7 @@ func TestNullJSON_Unmarshal(t *testing.T) {
 	assert.Equal(t, nil, err)
 	assert.Equal(t, User{
 		ID:       55,
-		Username: NullValue("hello user"),
+		Username: NullNew("hello user"),
 	}, user)
 
 	err = json.Unmarshal([]byte(`
@@ -86,10 +87,12 @@ func TestNullJSON_Unmarshal(t *testing.T) {
 	}, user)
 }
 
+func buildString(x int) string {
+	return fmt.Sprintf("Hello %d", x)
+}
+
 func TestSliceMap(t *testing.T) {
-	result := SliceMap([]int{2, 3, 4}, func(a int) string {
-		return fmt.Sprintf("Hello %d", a)
-	})
+	result := SliceMap([]int{2, 3, 4}, buildString)
 	assert.Equal(t, []string{
 		"Hello 2",
 		"Hello 3",
@@ -98,11 +101,23 @@ func TestSliceMap(t *testing.T) {
 }
 
 func TestGoMapMap(t *testing.T) {
-	result := GoMapMap(map[int]int{11: 21, 12: 22}, func(a int) string {
-		return fmt.Sprintf("Hello %d", a)
-	})
+	result := GoMapMap(map[int]int{11: 21, 12: 22}, buildString)
 	assert.Equal(t, map[int]string{
 		11: "Hello 21",
 		12: "Hello 22",
 	}, result)
+}
+
+func TestResult(t *testing.T) {
+	r1 := ResultNew[int](23)
+	r2 := ResultAndThen(r1, func(a int) Result[string] {
+		return ResultNew(buildString(a))
+	})
+	assert.Equal(t, ResultNew("Hello 23"), r2)
+
+	r1 = ResultErr[int](errors.New("some error"))
+	r2 = ResultAndThen(r1, func(a int) Result[string] {
+		return ResultNew(buildString(a))
+	})
+	assert.Equal(t, ResultErr[string](errors.New("some error")), r2)
 }
