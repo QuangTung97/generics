@@ -121,3 +121,24 @@ func TestResult(t *testing.T) {
 	})
 	assert.Equal(t, ResultErr[string](errors.New("some error")), r2)
 }
+
+func TestSliceDedup(t *testing.T) {
+	assert.Equal(t, []int{4, 5, 7, 2, 6}, SliceDedup([]int{4, 5, 7, 5, 2, 7, 6}))
+	assert.Equal(t, []string{"a", "b", "c"}, SliceDedup([]string{"a", "b", "c", "a"}))
+}
+
+func TestSliceDedupKey(t *testing.T) {
+	result := SliceDedupKey([]User{
+		{ID: 21},
+		{ID: 22},
+		{ID: 23},
+		{ID: 22},
+	}, func(e User) int64 {
+		return e.ID
+	})
+	assert.Equal(t, []User{
+		{ID: 21},
+		{ID: 22},
+		{ID: 23},
+	}, result)
+}

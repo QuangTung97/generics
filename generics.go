@@ -62,6 +62,37 @@ func SliceMap[X, Y any](data []X, fn func(a X) Y) []Y {
 	return result
 }
 
+// SliceDedup ...
+func SliceDedup[T comparable](data []T) []T {
+	result := make([]T, 0, len(data))
+	dataSet := map[T]struct{}{}
+	for _, e := range data {
+		_, ok := dataSet[e]
+		if ok {
+			continue
+		}
+		dataSet[e] = struct{}{}
+		result = append(result, e)
+	}
+	return result
+}
+
+// SliceDedupKey ...
+func SliceDedupKey[T any, K comparable](data []T, keyFunc func(e T) K) []T {
+	result := make([]T, 0, len(data))
+	dataSet := map[K]struct{}{}
+	for _, e := range data {
+		key := keyFunc(e)
+		_, ok := dataSet[key]
+		if ok {
+			continue
+		}
+		dataSet[key] = struct{}{}
+		result = append(result, e)
+	}
+	return result
+}
+
 // GoMapMap ...
 func GoMapMap[K comparable, X, Y any](data map[K]X, fn func(a X) Y) map[K]Y {
 	result := map[K]Y{}
